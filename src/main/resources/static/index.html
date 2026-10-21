@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusFix - Student Complaints</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f6fb;
+            margin: 0;
+            color: #243047;
+        }
+
+        header {
+            background: #2457d6;
+            color: white;
+            padding: 22px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+        }
+
+        main {
+            max-width: 650px;
+            margin: 30px auto;
+            padding: 25px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px #dce2ee;
+        }
+
+        h2 {
+            color: #2457d6;
+            margin-top: 0;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccd3df;
+            border-radius: 7px;
+            font-size: 16px;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 22px;
+            padding: 13px;
+            border: none;
+            border-radius: 7px;
+            background: #2457d6;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #173fa8;
+        }
+
+        #message {
+            margin-top: 16px;
+            color: #187444;
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #657087;
+        }
+
+        /* Admin Dashboard */
+        #dashboard {
+            margin: 30px 0;
+        }
+
+        #dashboard h2 {
+            font-size: 26px;
+            color: #172554;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .dashboard-card {
+            background: #ffffff;
+            padding: 22px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+        }
+
+        .dashboard-card h3 {
+            font-size: 15px;
+            color: #64748b;
+            margin: 0 0 12px;
+        }
+
+        .dashboard-card p {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1d4ed8;
+            margin: 0;
+        }
+
+        @media (max-width: 800px) {
+            .dashboard-cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 450px) {
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>CampusFix 🎓</h1>
+        <p>Your Campus, Your Voice, Our Responsibility.</p>
+    </header>
+
+    <main>
+        <h2>Submit a Complaint</h2>
+        <p>Tell us about a problem on your campus.</p>
+
+        <form id="complaintForm">
+            <label for="title">Complaint Title</label>
+            <input id="title" name="title" placeholder="e.g. Broken classroom fan" required>
+
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+                <option value="">Select a category</option>
+                <option>Electricity</option>
+                <option>Water Supply</option>
+                <option>Cleanliness</option>
+                <option>Classroom</option>
+                <option>Internet</option>
+                <option>Other</option>
+            </select>
+
+            <label for="location">Location on Campus</label>
+            <input id="location" name="location" placeholder="e.g. Block A, Room 101" required>
+
+            <label for="description">Complaint Details</label>
+            <textarea id="description" name="description" placeholder="Describe the problem..." required></textarea>
+
+            <button type="submit">Submit Complaint</button>
+        </form>
+
+        <p id="message" role="status"></p>
+        <section id="complaintsSection">
+            <section id="dashboard">
+                <h2>Admin Dashboard</h2>
+
+                <div class="dashboard-cards">
+                    <div class="dashboard-card">
+                        <h3>Total Complaints</h3>
+                        <p id="totalCount">Loading...</p>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>Pending</h3>
+                        <p id="pendingCount">Loading...</p>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>In Progress</h3>
+                        <p id="inProgressCount">Loading...</p>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>Resolved</h3>
+                        <p id="resolvedCount">Loading...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="trackComplaint">
+                <h2>Track Your Complaint</h2>
+                <p>Enter your Complaint ID to check its current status.</p>
+
+                <div>
+                    <input type="number" id="trackComplaintId" placeholder="Enter Complaint ID" min="1" />
+                    <button type="button" onclick="trackComplaint()">
+                        Track Complaint
+                    </button>
+                </div>
+
+                <div id="trackingResult"></div>
+            </section>
+
+            <h2>All Campus Complaints</h2>
+
+            <button type="button" onclick="loadComplaints()">
+                View Complaints
+            </button>
+
+            <div id="complaintsList"></div>
+        </section>
+    </main>
+
+    <footer>CampusFix · Making campus life better</footer>
+
+    <script>
+        document.getElementById("complaintForm")
+            .addEventListener("submit", async function (event) {
+                event.preventDefault();
+
+                const complaint = {
+                    title: document.getElementById("title").value,
+                    category: document.getElementById("category").value,
+                    location: document.getElementById("location").value,
+                    description: document.getElementById("description").value
+                };
+
+                const message = document.getElementById("message");
+                message.textContent = "Submitting complaint...";
+
+                try {
+                    const response = await fetch("/api/complaints", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(complaint)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Complaint could not be saved.");
+                    }
+
+                    const savedComplaint = await response.json();
+
+                    message.textContent =
+                        "Complaint submitted successfully! ID: " +
+                        savedComplaint.id +
+                        " | Status: " +
+                        savedComplaint.status;
+
+                    document.getElementById("complaintForm").reset();
+
+                } catch (error) {
+                    message.textContent =
+                        "Submission failed. Please check the server and database.";
+                    console.error(error);
+                }
+            });
+        async function loadStudentComplaints() {
+            const list = document.getElementById("complaintsList");
+            list.textContent = "Loading complaints...";
+
+            try {
+                const response = await fetch("/api/complaints", {
+                    headers: {
+                        "Authorization": "Bearer " + localStorage.getItem("token")
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Could not load complaints");
+                }
+
+                const complaints = await response.json();
+                updateComplaintStats(complaints);
+                list.replaceChildren();
+
+                if (complaints.length === 0) {
+                    list.textContent = "No complaints submitted yet.";
+                    return;
+                }
+
+                complaints.forEach(function (complaint) {
+                    const card = document.createElement("div");
+                    card.style.cssText =
+                        "border:1px solid #ccd3df; padding:15px; " +
+                        "margin-top:12px; border-radius:8px;";
+
+                    const title = document.createElement("h3");
+                    title.textContent = complaint.title;
+
+                    const details = document.createElement("p");
+                    details.textContent = "Category: " + complaint.category + " | Location: " + complaint.location;
+
+                    const status = document.createElement("p");
+                    status.textContent = "Status: " + complaint.status;
+                    const statusSelect = document.createElement("select");
+
+                    ["Pending", "In Progress", "Resolved"].forEach(function (option) {
+                        const item = document.createElement("option");
+                        item.value = option;
+                        item.textContent = option;
+                        statusSelect.appendChild(item);
+                    });
+
+                    statusSelect.value = complaint.status;
+
+                    const updateButton = document.createElement("button");
+                    updateButton.textContent = "Update Status";
+
+                    updateButton.addEventListener("click", async function () {
+                        try {
+                            const response = await fetch(
+                                "/api/complaints/" + complaint.id + "/status",
+                                {
+                                    method: "PUT",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "Authorization": "Bearer " + localStorage.getItem("token")
+                                    },
+                                    body: JSON.stringify(statusSelect.value)
+                                }
+                            );
+
+                            if (!response.ok) {
+                                throw new Error("Status update failed");
+                            }
+
+                            status.textContent = "Status: " + statusSelect.value;
+                            alert("Complaint status updated successfully!");
+                        } catch (error) {
+                            alert("Could not update status. Please try again.");
+                            console.error(error);
+                        }
+                    });
+
+                    card.append(title, details, status, statusSelect, updateButton);
+                    list.appendChild(card);
+                });
+            } catch (error) {
+                list.textContent =
+                    "Could not load complaints. Please try again.";
+                console.error(error);
+            }
+        }
+        async function loadDashboardStats() {
+            try {
+
+                const response = await fetch("/api/complaints/stats", {
+                    headers: {
+                        "Authorization": "Bearer " + localStorage.getItem("token")
+                    }
+                });
+
+
+                if (!response.ok) {
+                    throw new Error("Could not load dashboard stats");
+                }
+
+                const stats = await response.json();
+
+                document.getElementById("totalCount").textContent = stats.total;
+                document.getElementById("pendingCount").textContent = stats.pending;
+                document.getElementById("inProgressCount").textContent = stats.inProgress;
+                document.getElementById("resolvedCount").textContent = stats.resolved;
+
+            } catch (error) {
+                console.error("Dashboard error:", error);
+            }
+        }
+
+        loadDashboardStats();
+
+        async function trackComplaint() {
+            const id = document.getElementById("trackComplaintId").value;
+            const result = document.getElementById("trackingResult");
+
+            if (!id || Number(id) < 1) {
+                result.textContent = "Please enter a valid Complaint ID.";
+                return;
+            }
+
+            result.textContent = "Searching for your complaint...";
+
+            try {
+
+                const response = await fetch(`/api/complaints/${id}`, {
+                    headers: {
+                        "Authorization": "Bearer " + localStorage.getItem("token")
+                    }
+                });
+
+
+                if (!response.ok) {
+                    result.textContent = "Complaint not found. Please check your ID.";
+                    return;
+                }
+
+                const complaint = await response.json();
+
+                result.innerHTML = `
+            <h3>Complaint Details</h3>
+            <p><strong>ID:</strong> ${complaint.id}</p>
+            <p><strong>Title:</strong> ${complaint.title}</p>
+            <p><strong>Status:</strong> ${complaint.status}</p>
+        `;
+            } catch (error) {
+                result.textContent = "Unable to connect. Please try again.";
+                console.error(error);
+            }
+        }
+
+    </script>
+    <!-- CampusFix Student Dashboard -->
+    <div id="student-dashboard" style="display: none; max-width: 900px; margin: 30px auto; padding: 20px;">
+        <h1>CampusFix Student Dashboard</h1>
+
+        <div id="complaint-stats" style="display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0;">
+            <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                <h3>Total Complaints</h3>
+                <p id="total-count">0</p>
+            </div>
+
+            <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                <h3>Pending</h3>
+                <p id="pending-count">0</p>
+            </div>
+
+            <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                <h3>In Progress</h3>
+                <p id="progress-count">0</p>
+            </div>
+
+            <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                <h3>Resolved</h3>
+                <p id="resolved-count">0</p>
+            </div>
+        </div>
+
+
+        <div id="complaint-section" style="margin-top: 25px;">
+            <h2>Submit a New Complaint</h2>
+
+            <form id="complaint-form">
+                <label for="complaint-title">Complaint Title</label>
+                <input type="text" id="complaint-title" placeholder="e.g. Classroom fan not working" required
+                    style="display:block; width:100%; padding:10px; margin:8px 0; box-sizing:border-box;">
+
+                <label for="complaint-category">Category</label>
+                <select id="complaint-category" required
+                    style="display:block; width:100%; padding:10px; margin:8px 0; box-sizing:border-box;">
+                    <option value="">Select category</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Water">Water</option>
+                    <option value="Cleanliness">Cleanliness</option>
+                    <option value="Classroom">Classroom</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <label for="complaint-location">Location</label>
+                <input type="text" id="complaint-location" placeholder="e.g. Block A, Room 101" required
+                    style="display:block; width:100%; padding:10px; margin:8px 0; box-sizing:border-box;">
+
+                <label for="complaint-description">Description</label>
+                <textarea id="complaint-description" placeholder="Describe the problem..." required
+                    style="display:block; width:100%; padding:10px; margin:8px 0; box-sizing:border-box;"></textarea>
+
+                <button type="submit" style="padding:10px 20px;">
+                    Submit Complaint
+                </button>
+            </form>
+
+            <p id="complaint-message"></p>
+
+            <h2>My Complaints</h2>
+            <div id="complaint-list">
+                <p>Your submitted complaints will appear here.</p>
+            </div>
+
+        </div>
+
+
+        <button id="logout-button" type="button" style="padding: 10px 20px; margin: 10px 0;">
+            Logout
+        </button>
+
+        <p>Welcome! Yahan tum apni campus complaints manage kar sakte ho.</p>
+    </div>
+
+    <!-- CampusFix Login and Registration -->
+    <div id="auth-section"
+        style="max-width: 400px; margin: 30px auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+
+        <h2>CampusFix</h2>
+        <p>Student Login / Registration</p>
+
+        <form id="login-form">
+            <h3>Login</h3>
+
+            <input type="email" id="login-email" placeholder="Enter your email" required
+                style="width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box;">
+
+            <input type="password" id="login-password" placeholder="Enter your password" required
+                style="width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box;">
+
+            <button type="submit" style="padding: 10px 20px;">
+                Login
+            </button>
+        </form>
+
+        <hr>
+
+        <form id="register-form">
+            <h3>Create Student Account</h3>
+
+            <input type="text" id="register-name" placeholder="Full name" required
+                style="width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box;">
+
+            <input type="email" id="register-email" placeholder="Email address" required
+                style="width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box;">
+
+            <input type="password" id="register-password" placeholder="Create password (minimum 8 characters)"
+                minlength="8" required style="width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box;">
+
+            <button type="submit" style="padding: 10px 20px;">
+                Register
+            </button>
+        </form>
+
+        <p id="auth-message"></p>
+    </div>
+
+
+    <script>
+        const authMessage = document.getElementById("auth-message");
+
+        document.getElementById("register-form").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const user = {
+                name: document.getElementById("register-name").value,
+                email: document.getElementById("register-email").value,
+                password: document.getElementById("register-password").value
+            };
+
+            try {
+                const response = await fetch("/api/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(user)
+                });
+
+                const result = await response.text();
+
+                if (!response.ok) {
+                    throw new Error(result || "Registration failed");
+                }
+
+                authMessage.textContent = "Registration successful! You can now log in.";
+                document.getElementById("register-form").reset();
+            } catch (error) {
+                authMessage.textContent = "Registration failed. Please try again.";
+            }
+        });
+
+        document.getElementById("login-form").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const user = {
+                email: document.getElementById("login-email").value,
+                password: document.getElementById("login-password").value
+            };
+
+            try {
+                const response = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(user)
+                });
+
+                const result = await response.json();
+                localStorage.setItem("token", result.token);
+
+                if (!response.ok) {
+                    throw new Error("Login failed");
+                }
+
+                authMessage.textContent = "Welcome, " + result.name + "! Login successful.";
+
+                document.getElementById("auth-section").style.display = "none";
+
+                if (result.role === "ADMIN") {
+                    document.getElementById("dashboard").style.display = "block";
+                    document.getElementById("student-dashboard").style.display = "none";
+                    loadDashboardStats();
+                    loadStudentComplaints();
+                } else {
+                    document.getElementById("dashboard").style.display = "none";
+                    document.getElementById("student-dashboard").style.display = "block";
+                }
+
+                document.querySelector("#student-dashboard p").textContent =
+                    "Welcome, " + result.name + "! Yahan tum apni campus complaints manage kar sakte ho.";
+
+            } catch (error) {
+                authMessage.textContent = "Invalid email or password. Please try again.";
+            }
+        });
+
+        document.getElementById("logout-button").addEventListener("click", function () {
+            document.getElementById("student-dashboard").style.display = "none";
+            document.getElementById("auth-section").style.display = "block";
+            document.getElementById("login-form").reset();
+            document.getElementById("auth-message").textContent = "You have logged out.";
+        });
+
+        document.getElementById("complaint-form").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const complaint = {
+                title: document.getElementById("complaint-title").value,
+                category: document.getElementById("complaint-category").value,
+                location: document.getElementById("complaint-location").value,
+                description: document.getElementById("complaint-description").value
+            };
+
+            try {
+                const response = await fetch("/api/complaints", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + localStorage.getItem("token")
+                    },
+                    body: JSON.stringify(complaint)
+                });
+
+                if (!response.ok) {
+                    throw new Error("Complaint submission failed");
+                }
+
+                document.getElementById("complaint-message").textContent =
+                    "Complaint submitted successfully!";
+
+                document.getElementById("complaint-form").reset();
+                loadComplaints();
+
+            } catch (error) {
+                document.getElementById("complaint-message").textContent =
+                    "Complaint submit nahi hui. Please try again.";
+            }
+        });
+
+        async function loadComplaints() {
+            const complaintList = document.getElementById("complaint-list");
+
+            try {
+                const response = await fetch("/api/complaints", {
+                    headers: {
+                        "Authorization": "Bearer " + localStorage.getItem("token")
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Could not load complaints");
+                }
+
+                const complaints = await response.json();
+
+                complaintList.replaceChildren();
+
+                if (complaints.length === 0) {
+                    complaintList.textContent = "Abhi koi complaint submit nahi hui hai.";
+                    return;
+                }
+
+                complaints.forEach(function (complaint) {
+                    const card = document.createElement("div");
+                    card.style.border = "1px solid #ddd";
+                    card.style.padding = "12px";
+                    card.style.margin = "10px 0";
+                    card.style.borderRadius = "8px";
+
+                    const title = document.createElement("h3");
+                    title.textContent = complaint.title;
+
+                    const category = document.createElement("p");
+                    category.textContent = "Category: " + complaint.category;
+
+                    const location = document.createElement("p");
+                    location.textContent = "Location: " + complaint.location;
+
+                    const status = document.createElement("p");
+                    status.textContent = "Status: " + complaint.status;
+
+                    status.style.fontWeight = "bold";
+                    status.style.padding = "6px";
+                    status.style.borderRadius = "5px";
+
+                    if (complaint.status === "Resolved") {
+                        status.style.color = "green";
+                        status.style.backgroundColor = "#e8f5e9";
+                    } else if (complaint.status === "In Progress") {
+                        status.style.color = "#9a6700";
+                        status.style.backgroundColor = "#fff8e1";
+                    } else {
+                        status.style.color = "#b42318";
+                        status.style.backgroundColor = "#ffebee";
+                    }
+
+
+                    card.append(title, category, location, status);
+                    complaintList.appendChild(card);
+                });
+
+            } catch (error) {
+                complaintList.textContent =
+                    "Complaints load nahi hui. Please refresh karke try karo.";
+            }
+        }
+
+        function updateComplaintStats(complaints) {
+            document.getElementById("total-count").textContent =
+                complaints.length;
+
+            document.getElementById("pending-count").textContent =
+                complaints.filter(c => c.status === "Pending").length;
+
+            document.getElementById("progress-count").textContent =
+                complaints.filter(c => c.status === "In Progress").length;
+
+            document.getElementById("resolved-count").textContent =
+                complaints.filter(c => c.status === "Resolved").length;
+        }
+
+
+        document.getElementById("login-form").addEventListener("submit", function () {
+            // Dashboard login ke baad load hoga.
+            setTimeout(loadStudentComplaints, 1000);
+        });
+
+
+    </script>
+
+</body>
+
+</html>
